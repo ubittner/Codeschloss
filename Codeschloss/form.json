@@ -45,6 +45,20 @@
       "suffix": "Anzahl"
     },
     {
+      "type": "CheckBox",
+      "name": "UseAutomaticReset",
+      "caption": "automatisch zurücksetzen um"
+    },
+    {
+      "type": "SelectTime",
+      "name": "ResetTime",
+      "caption": "Uhr"
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
       "type": "NumberSpinner",
       "name": "LogEntries",
       "caption": "Protokolleinträge",

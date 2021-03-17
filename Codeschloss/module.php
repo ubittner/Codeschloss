@@ -39,6 +39,7 @@ class Codeschloss extends IPSModule
         }
         $this->ResetCodeBuffer();
         $this->ResetFailureAttempts();
+        $this->SetResetFailureAttemptsTimer();
         $this->RegisterMessages();
     }
 
@@ -162,6 +163,7 @@ class Codeschloss extends IPSModule
     public function ResetFailureAttempts(): void
     {
         $this->SetValue('FailureAttempts', 0);
+        $this->SetResetFailureAttemptsTimer();
     }
 
     public function ResetStatus(): void
@@ -211,6 +213,8 @@ class Codeschloss extends IPSModule
         $this->RegisterPropertyString('CodeStatusFour', '');
         $this->RegisterPropertyString('CodeStatusFive', '');
         $this->RegisterPropertyInteger('FailureAttempts', 3);
+        $this->RegisterPropertyBoolean('UseAutomaticReset', false);
+        $this->RegisterPropertyString('ResetTime', '{"hour":0,"minute":0,"second":1}');
         $this->RegisterPropertyInteger('LogEntries', 5);
         $this->RegisterPropertyInteger('CodeDigits', 4);
         $this->RegisterPropertyInteger('TimeLimit', 5);
@@ -281,6 +285,27 @@ class Codeschloss extends IPSModule
     private function RegisterTimers(): void
     {
         $this->RegisterTimer('ResetCodeBuffer', 0, 'CS_ResetCodeBuffer(' . $this->InstanceID . ');');
+        $this->RegisterTimer('ResetFailureAttempts', 0, 'CS_ResetFailureAttempts(' . $this->InstanceID . ');');
+    }
+
+    private function SetResetFailureAttemptsTimer(): void
+    {
+        if ($this->ReadPropertyBoolean('UseAutomaticReset')) {
+            $time = json_decode($this->ReadPropertyString('ResetTime'));
+            $hour = $time->hour;
+            $minute = $time->minute;
+            $second = $time->second;
+            $definedTime = $hour . ':' . $minute . ':' . $second;
+            if (time() >= strtotime($definedTime)) {
+                $timestamp = mktime($hour, $minute, $second, (int) date('n'), (int) date('j') + 1, (int) date('Y'));
+            } else {
+                $timestamp = mktime($hour, $minute, $second, (int) date('n'), (int) date('j'), (int) date('Y'));
+            }
+            $interval = ($timestamp - time()) * 1000;
+        } else {
+            $interval = 0;
+        }
+        $this->SetTimerInterval('ResetFailureAttempts', $interval);
     }
 
     private function UnregisterMessages(): void
