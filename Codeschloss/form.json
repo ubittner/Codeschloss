@@ -1,0 +1,178 @@
+{
+  "elements": [
+    {
+      "type": "CheckBox",
+      "name": "MaintenanceMode",
+      "caption": "Wartungsmodus"
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
+      "type": "PasswordTextBox",
+      "name": "CodeStatusOne",
+      "caption": "Code Status #1"
+    },
+    {
+      "type": "PasswordTextBox",
+      "name": "CodeStatusTwo",
+      "caption": "Code Status #2"
+    },
+    {
+      "type": "PasswordTextBox",
+      "name": "CodeStatusThree",
+      "caption": "Code Status #3"
+    },
+    {
+      "type": "PasswordTextBox",
+      "name": "CodeStatusFour",
+      "caption": "Code Status #4"
+    },
+    {
+      "type": "PasswordTextBox",
+      "name": "CodeStatusFive",
+      "caption": "Code Status #5"
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "FailureAttempts",
+      "caption": "Fehlversuche",
+      "suffix": "Anzahl"
+    },
+    {
+      "type": "NumberSpinner",
+      "name": "LogEntries",
+      "caption": "Protokolleinträge",
+      "suffix": "Anzahl"
+    },
+    {
+      "type": "Label",
+      "caption": " "
+    },
+    {
+      "type": "ExpansionPanel",
+      "caption": "Externes Codeschloss",
+      "items": [
+        {
+          "type": "NumberSpinner",
+          "name": "CodeDigits",
+          "caption": "Zifferncode",
+          "suffix": "Anzahl"
+        },
+        {
+          "type": "NumberSpinner",
+          "name": "TimeLimit",
+          "caption": "Zeitvorgabe",
+          "suffix": "Sekunden"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitZero",
+          "caption": "Ziffer #0"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitOne",
+          "caption": "Ziffer #1"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitTwo",
+          "caption": "Ziffer #2"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitThree",
+          "caption": "Ziffer #3"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitFour",
+          "caption": "Ziffer #4"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitFive",
+          "caption": "Ziffer #5"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitSix",
+          "caption": "Ziffer #6"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitSeven",
+          "caption": "Ziffer #7"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitEight",
+          "caption": "Ziffer #8"
+        },
+        {
+          "type": "SelectVariable",
+          "name": "DigitNine",
+          "caption": "Ziffer #9"
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "type": "Button",
+      "caption": "Fehlversuche zurücksetzen",
+      "onClick": "CS_ResetFailureAttempts($id); echo 'Fehlversuche erfolgreich zurückgesetzt!';"
+    },
+    {
+      "type": "Button",
+      "caption": "Status zurücksetzen",
+      "onClick": "CS_ResetStatus($id); echo 'Status erfolgreich zurückgesetzt!';"
+    },
+    {
+      "type": "Button",
+      "caption": "Log zurücksetzen",
+      "onClick": "CS_ClearLog($id); echo 'Log erfolgreich zurückgesetzt!';"
+    },
+    {
+      "type": "TestCenter"
+    }
+  ],
+  "status": [
+    {
+      "code": 101,
+      "icon": "active",
+      "caption": "Codeschloss wird erstellt"
+    },
+    {
+      "code": 102,
+      "icon": "active",
+      "caption": "Codeschloss ist aktiv"
+    },
+    {
+      "code": 103,
+      "icon": "active",
+      "caption": "Codeschloss wird gelöscht"
+    },
+    {
+      "code": 104,
+      "icon": "inactive",
+      "caption": "Codeschloss ist inaktiv"
+    },
+    {
+      "code": 200,
+      "icon": "inactive",
+      "caption": "Die Codes müssen unterschiedlich sein!"
+    },
+    {
+      "code": 201,
+      "icon": "inactive",
+      "caption": "Es ist Fehler aufgetreten, weitere Informationen unter Meldungen, im Log oder Debug!"
+    }
+  ]
+}

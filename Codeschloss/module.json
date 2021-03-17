@@ -1,0 +1,14 @@
+{
+  "id": "{16F05AD0-79BD-B93E-296A-76C989DC9A9E}",
+  "name": "Codeschloss",
+  "type": 3,
+  "vendor": "Ulrich Bittner",
+  "aliases": [
+    "Codeschloss"
+  ],
+  "url": "https://github.com/ubittner/Codeschloss",
+  "parentRequirements": [],
+  "childRequirements": [],
+  "implemented": [],
+  "prefix": "CS"
+}
