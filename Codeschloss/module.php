@@ -1,5 +1,12 @@
 <?php
 
+/*
+ * @author      Ulrich Bittner
+ * @copyright   (c) 2020, 2021
+ * @license    	CC BY-NC-SA 4.0
+ * @see         https://github.com/ubittner/Codeschloss
+ */
+
 /** @noinspection PhpUnused */
 
 declare(strict_types=1);
@@ -10,37 +17,113 @@ class Codeschloss extends IPSModule
     {
         // Never delete this line!
         parent::Create();
-        $this->RegisterProperties();
-        $this->CreateProfiles();
-        $this->RegisterVariables();
-        $this->RegisterTimers();
-    }
 
-    public function Destroy()
-    {
-        // Never delete this line!
-        parent::Destroy();
-        $this->DeleteProfiles();
+        // Properties
+        // Functions
+        $this->RegisterPropertyBoolean('MaintenanceMode', false);
+        // Code status
+        $this->RegisterPropertyString('CodeStatusOne', '');
+        $this->RegisterPropertyString('CodeStatusTwo', '');
+        $this->RegisterPropertyString('CodeStatusThree', '');
+        $this->RegisterPropertyString('CodeStatusFour', '');
+        $this->RegisterPropertyString('CodeStatusFive', '');
+        $this->RegisterPropertyInteger('FailureAttempts', 3);
+        $this->RegisterPropertyBoolean('UseAutomaticReset', false);
+        $this->RegisterPropertyString('ResetTime', '{"hour":0,"minute":0,"second":1}');
+        $this->RegisterPropertyInteger('LogEntries', 5);
+        // External code lock
+        $this->RegisterPropertyInteger('CodeDigits', 4);
+        $this->RegisterPropertyInteger('TimeLimit', 5);
+        $this->RegisterPropertyInteger('DigitZero', 0);
+        $this->RegisterPropertyInteger('DigitOne', 0);
+        $this->RegisterPropertyInteger('DigitTwo', 0);
+        $this->RegisterPropertyInteger('DigitThree', 0);
+        $this->RegisterPropertyInteger('DigitFour', 0);
+        $this->RegisterPropertyInteger('DigitFive', 0);
+        $this->RegisterPropertyInteger('DigitSix', 0);
+        $this->RegisterPropertyInteger('DigitSeven', 0);
+        $this->RegisterPropertyInteger('DigitEight', 0);
+        $this->RegisterPropertyInteger('DigitNine', 0);
+
+        // Variables
+        // Code input
+        $id = @$this->GetIDForIdent('CodeInput');
+        $this->RegisterVariableString('CodeInput', 'Code', '', 10);
+        $this->EnableAction('CodeInput');
+        if ($id == false) {
+            IPS_SetIcon($this->GetIDForIdent('CodeInput'), 'Key');
+        }
+        // Failure Attempts
+        $id = @$this->GetIDForIdent('FailureAttempts');
+        $this->RegisterVariableInteger('FailureAttempts', 'Fehlversuche', '', 20);
+        if ($id == false) {
+            IPS_SetIcon($this->GetIDForIdent('FailureAttempts'), 'Warning');
+        }
+        // Last status
+        $profileName = 'CS.' . $this->InstanceID . '.LastStatus';
+        if (!IPS_VariableProfileExists($profileName)) {
+            IPS_CreateVariableProfile($profileName, 1);
+        }
+        IPS_SetVariableProfileAssociation($profileName, 0, 'Unbekannt', 'Cross', 0);
+        IPS_SetVariableProfileAssociation($profileName, 1, 'Status #1', 'Information', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profileName, 2, 'Status #2', 'Information', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profileName, 3, 'Status #3', 'Information', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profileName, 4, 'Status #4', 'Information', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profileName, 5, 'Status #5', 'Information', 0x00FF00);
+        IPS_SetVariableProfileAssociation($profileName, 99, 'Falscher Code!', 'Warning', 0xFF0000);
+        $this->RegisterVariableInteger('LastStatus', 'Letzter Status', $profileName, 30);
+        // Log
+        $id = @$this->GetIDForIdent('Log');
+        $this->RegisterVariableString('Log', 'Protokoll', '~TextBox', 40);
+        if ($id == false) {
+            IPS_SetIcon($this->GetIDForIdent('Log'), 'Database');
+        }
+
+        // Timers
+        $this->RegisterTimer('ResetCodeBuffer', 0, 'CS_ResetCodeBuffer(' . $this->InstanceID . ');');
+        $this->RegisterTimer('ResetFailureAttempts', 0, 'CS_ResetFailureAttempts(' . $this->InstanceID . ');');
     }
 
     public function ApplyChanges()
     {
         // Wait until IP-Symcon is started
         $this->RegisterMessage(0, IPS_KERNELSTARTED);
+
         // Never delete this line!
         parent::ApplyChanges();
+
         // Check kernel runlevel
         if (IPS_GetKernelRunlevel() != KR_READY) {
             return;
         }
+
         $this->UnregisterMessages();
+
+        // Validation
         if (!$this->ValidateConfiguration()) {
             return;
         }
+
+        // Reset
         $this->ResetCodeBuffer();
         $this->ResetFailureAttempts();
         $this->SetResetFailureAttemptsTimer();
         $this->RegisterMessages();
+    }
+
+    public function Destroy()
+    {
+        // Never delete this line!
+        parent::Destroy();
+
+        // Delete profiles
+        $profiles = ['LastStatus'];
+        foreach ($profiles as $profile) {
+            $profileName = 'CS.' . $this->InstanceID . '.' . $profile;
+            if (@IPS_VariableProfileExists($profileName)) {
+                IPS_DeleteVariableProfile($profileName);
+            }
+        }
     }
 
     public function MessageSink($TimeStamp, $SenderID, $Message, $Data)
@@ -52,12 +135,15 @@ class Codeschloss extends IPSModule
                 break;
 
             case VM_UPDATE:
+
                 // $Data[0] = actual value
                 // $Data[1] = value changed
                 // $Data[2] = last value
                 // $Data[3] = timestamp actual value
                 // $Data[4] = timestamp value changed
                 // $Data[5] = timestamp last value
+
+                // Check trigger variable
                 if ($SenderID == $this->ReadPropertyInteger('DigitZero')) {
                     $digit = 0;
                 }
@@ -202,90 +288,6 @@ class Codeschloss extends IPSModule
     private function KernelReady(): void
     {
         $this->ApplyChanges();
-    }
-
-    private function RegisterProperties(): void
-    {
-        $this->RegisterPropertyBoolean('MaintenanceMode', false);
-        $this->RegisterPropertyString('CodeStatusOne', '');
-        $this->RegisterPropertyString('CodeStatusTwo', '');
-        $this->RegisterPropertyString('CodeStatusThree', '');
-        $this->RegisterPropertyString('CodeStatusFour', '');
-        $this->RegisterPropertyString('CodeStatusFive', '');
-        $this->RegisterPropertyInteger('FailureAttempts', 3);
-        $this->RegisterPropertyBoolean('UseAutomaticReset', false);
-        $this->RegisterPropertyString('ResetTime', '{"hour":0,"minute":0,"second":1}');
-        $this->RegisterPropertyInteger('LogEntries', 5);
-        $this->RegisterPropertyInteger('CodeDigits', 4);
-        $this->RegisterPropertyInteger('TimeLimit', 5);
-        $this->RegisterPropertyInteger('DigitZero', 0);
-        $this->RegisterPropertyInteger('DigitOne', 0);
-        $this->RegisterPropertyInteger('DigitTwo', 0);
-        $this->RegisterPropertyInteger('DigitThree', 0);
-        $this->RegisterPropertyInteger('DigitFour', 0);
-        $this->RegisterPropertyInteger('DigitFive', 0);
-        $this->RegisterPropertyInteger('DigitSix', 0);
-        $this->RegisterPropertyInteger('DigitSeven', 0);
-        $this->RegisterPropertyInteger('DigitEight', 0);
-        $this->RegisterPropertyInteger('DigitNine', 0);
-    }
-
-    private function CreateProfiles(): void
-    {
-        // Last status
-        $profileName = 'CS.' . $this->InstanceID . '.LastStatus';
-        if (!IPS_VariableProfileExists($profileName)) {
-            IPS_CreateVariableProfile($profileName, 1);
-        }
-        IPS_SetVariableProfileAssociation($profileName, 0, 'Unbekannt', 'Cross', 0);
-        IPS_SetVariableProfileAssociation($profileName, 1, 'Status #1', 'Information', 0x00FF00);
-        IPS_SetVariableProfileAssociation($profileName, 2, 'Status #2', 'Information', 0x00FF00);
-        IPS_SetVariableProfileAssociation($profileName, 3, 'Status #3', 'Information', 0x00FF00);
-        IPS_SetVariableProfileAssociation($profileName, 4, 'Status #4', 'Information', 0x00FF00);
-        IPS_SetVariableProfileAssociation($profileName, 5, 'Status #5', 'Information', 0x00FF00);
-        IPS_SetVariableProfileAssociation($profileName, 99, 'Falscher Code!', 'Warning', 0xFF0000);
-    }
-
-    private function DeleteProfiles(): void
-    {
-        $profiles = ['LastStatus'];
-        foreach ($profiles as $profile) {
-            $profileName = 'CS.' . $this->InstanceID . '.' . $profile;
-            if (@IPS_VariableProfileExists($profileName)) {
-                IPS_DeleteVariableProfile($profileName);
-            }
-        }
-    }
-
-    private function RegisterVariables(): void
-    {
-        // Code input
-        $id = @$this->GetIDForIdent('CodeInput');
-        $this->RegisterVariableString('CodeInput', 'Code', '', 10);
-        $this->EnableAction('CodeInput');
-        if ($id == false) {
-            IPS_SetIcon($this->GetIDForIdent('CodeInput'), 'Key');
-        }
-        // Failure Attempts
-        $id = @$this->GetIDForIdent('FailureAttempts');
-        $this->RegisterVariableInteger('FailureAttempts', 'Fehlversuche', '', 20);
-        if ($id == false) {
-            IPS_SetIcon($this->GetIDForIdent('FailureAttempts'), 'Warning');
-        }
-        // Last status
-        $this->RegisterVariableInteger('LastStatus', 'Letzter Status', 'CS.' . $this->InstanceID . '.LastStatus', 30);
-        // Log
-        $id = @$this->GetIDForIdent('Log');
-        $this->RegisterVariableString('Log', 'Protokoll', '~TextBox', 40);
-        if ($id == false) {
-            IPS_SetIcon($this->GetIDForIdent('Log'), 'Database');
-        }
-    }
-
-    private function RegisterTimers(): void
-    {
-        $this->RegisterTimer('ResetCodeBuffer', 0, 'CS_ResetCodeBuffer(' . $this->InstanceID . ');');
-        $this->RegisterTimer('ResetFailureAttempts', 0, 'CS_ResetFailureAttempts(' . $this->InstanceID . ');');
     }
 
     private function SetResetFailureAttemptsTimer(): void
